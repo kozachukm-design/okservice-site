@@ -1,6 +1,10 @@
 name: Оновлення ноутбуків з Telegram
 
 on:
+  push:
+    paths:
+      - build_catalog.py
+      - .github/workflows/update.yml
   schedule:
     - cron: "0 6 * * *"      # щодня о 06:00 UTC (~09:00 за Києвом)
   workflow_dispatch: {}       # кнопка «Run workflow» для ручного запуску
