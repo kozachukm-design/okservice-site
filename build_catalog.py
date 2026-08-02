@@ -1,155 +1,120 @@
 # -*- coding: utf-8 -*-
 """
 OK Service — авто-збирач ноутбуків із Telegram-каналу.
-Читає публічний перегляд каналу (t.me/s/...), прибирає смайли, розбирає
-характеристики (у т.ч. «знос → стан»), тягне дату й усі фото альбому,
-будує фірмові картки й вставляє їх у index.html між мітками
-<!--LAPTOPS:START--> ... <!--LAPTOPS:END-->.
+Читає t.me/s/..., прибирає смайли, розбирає характеристики (знос -> стан),
+ЗАВАНТАЖУЄ фото в теку img/ (щоб вони не зникали), будує фірмові картки
+і вставляє їх у index.html між <!--LAPTOPS:START--> ... <!--LAPTOPS:END-->.
 """
-import re, html, requests
+import re, os, html, requests
 from bs4 import BeautifulSoup
 
-CHANNEL   = "ok_0683627070"                 # твій канал
-DM_LINK   = "https://t.me/+380683627070"    # кнопка «Забронювати»
+CHANNEL   = "ok_0683627070"
+DM_LINK   = "https://t.me/+380683627070"
 INDEX     = "index.html"
-MAX_CARDS = 6                               # скільки найновіших показувати
-MAX_PAGES = 3                               # скільки сторінок каналу переглянути, щоб набрати MAX_CARDS
-SKIP      = ["продано", "prodano", "резерв", "reserve"]   # такі пости пропускаємо
-
-UA = {"User-Agent": "Mozilla/5.0 (compatible; OKServiceBot/1.0)"}
+IMG_DIR   = "img"
+MAX_CARDS = 6
+MAX_PAGES = 3
+MAX_PHOTOS_PER_CARD = 6
+SKIP      = ["продано", "prodano", "резерв", "reserve"]
+UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36"}
 
 EMOJI = re.compile(
     "[\U0001F000-\U0001FAFF\U00002600-\U000027BF\U0001F1E6-\U0001F1FF"
     "\U00002190-\U000021FF\U00002B00-\U00002BFF\U0000FE00-\U0000FE0F\U0000200D"
-    "\U000023E9-\U000023FA\U00002B50\U0000274C\U00002705\U0000203C\U00002049]+",
-    flags=re.UNICODE)
+    "\U000023E9-\U000023FA\U00002B50\U0000274C\U00002705\U0000203C\U00002049]+", flags=re.UNICODE)
 
-# синоніми підписів — щоб дрібні відхилення у постах не ламали розбір
-LB_MODEL   = ("Виробник", "Модель")
-LB_SCREEN  = ("Екран", "Дисплей", "Матриця")
-LB_CPU     = ("Процесор", "CPU")
-LB_RAM     = ("Оперативна пам", "ОЗП", "RAM", "Оперативка", "Память", "Пам'ять")
-LB_STORAGE = ("Накопичувач", "Диск", "SSD", "HDD", "Накопич")
-LB_GPU     = ("Відео", "Відеокарта", "Графіка", "GPU")
-LB_PRICE   = ("Ціна", "Вартість")
+LB_MODEL=("Виробник","Модель"); LB_SCREEN=("Екран","Дисплей","Матриця")
+LB_CPU=("Процесор","CPU"); LB_RAM=("Оперативна пам","ОЗП","RAM","Оперативка","Память","Пам'ять")
+LB_STORAGE=("Накопичувач","Диск","SSD","HDD","Накопич"); LB_GPU=("Відео","Відеокарта","Графіка","GPU")
+LB_PRICE=("Ціна","Вартість")
 
 def clean(t):
-    t = EMOJI.sub("", t or "")
-    t = t.replace("\u2019", "'").replace("`", "'").replace("\u00b4", "'")
-    return re.sub(r"[ \t]{2,}", " ", t).strip(" \u00a0·-—:!")
+    t=EMOJI.sub("",t or ""); t=t.replace("\u2019","'").replace("`","'").replace("\u00b4","'")
+    return re.sub(r"[ \t]{2,}"," ",t).strip(" \u00a0·-—:!")
+def esc(t): return html.escape(clean(t))
 
-def esc(t):
-    return html.escape(clean(t))
-
-def field(text, labels):
+def field(text,labels):
     for line in text.splitlines():
-        lc = clean(line)
-        low = lc.lower()
+        lc=clean(line); low=lc.lower()
         for lab in labels:
             if low.startswith(lab.lower()):
-                rest = lc.split(":", 1)[1] if ":" in lc else lc[len(lab):]
-                return clean(rest)
+                return clean(lc.split(":",1)[1] if ":" in lc else lc[len(lab):])
     return ""
-
 def battery(text):
-    line = next((l for l in text.splitlines() if re.search(r"акумулятор|батаре", l, re.I)), "")
-    if not line:
-        return ""
-    val = line.split(":", 1)[1] if ":" in line else line
-    out = []
-    mp = re.search(r"(\d{1,3})\s*%", val)
+    line=next((l for l in text.splitlines() if re.search(r"акумулятор|батаре",l,re.I)),"")
+    if not line: return ""
+    val=line.split(":",1)[1] if ":" in line else line; out=[]
+    mp=re.search(r"(\d{1,3})\s*%",val)
     if mp:
-        n = int(mp.group(1))
-        # «знош»/«знос» у рядку → це рівень зношення, показуємо позитивно (стан)
-        out.append(f"стан {100 - n}%" if re.search(r"знош|знос", line, re.I) else f"{n}%")
-    cap = re.search(r"(\d+)\s*(?:вт·год|вт|ват|wh)", val, re.I)
-    if cap:
-        out.append(f"{cap.group(1)} Вт·год")
+        n=int(mp.group(1)); out.append(f"стан {100-n}%" if re.search(r"знош|знос",line,re.I) else f"{n}%")
+    cap=re.search(r"(\d+)\s*(?:вт·год|вт|ват|wh)",val,re.I)
+    if cap: out.append(f"{cap.group(1)} Вт·год")
     return clean(" · ".join(out)) if out else clean(val)
-
 def price(text):
-    raw = field(text, LB_PRICE)
-    d = re.sub(r"\D", "", raw.split("грн")[0])
-    return (f"{int(d):,}".replace(",", " ") + " грн") if d else clean(raw)
-
+    raw=field(text,LB_PRICE); d=re.sub(r"\D","",raw.split("грн")[0])
+    return (f"{int(d):,}".replace(","," ")+" грн") if d else clean(raw)
 def is_laptop(text):
-    low = text.lower()
-    if not any(w in low for w in ("ціна", "вартість")):
-        return False
-    if any(w in low for w in SKIP):
-        return False
-    return True
+    low=text.lower()
+    return any(w in low for w in ("ціна","вартість")) and not any(w in low for w in SKIP)
 
 def fetch(url):
-    r = requests.get(url, headers=UA, timeout=30)
-    r.raise_for_status()
-    return r.text
-
+    r=requests.get(url,headers=UA,timeout=30); r.raise_for_status(); return r.text
 def parse(page):
-    """Повертає (список повідомлень, найменший id на сторінці)."""
-    soup = BeautifulSoup(page, "html.parser")
-    msgs, ids = [], []
+    soup=BeautifulSoup(page,"html.parser"); msgs=[]; ids=[]
     for m in soup.select(".tgme_widget_message"):
-        post = m.get("data-post")
-        if not post or "/" not in post:
-            continue
-        pid = int(post.split("/")[1])
-        ids.append(pid)
-        te = m.select_one(".tgme_widget_message_text")
-        text = te.get_text("\n") if te else ""
-        if not text.strip():
-            continue
-        photos = []
+        post=m.get("data-post")
+        if not post or "/" not in post: continue
+        pid=int(post.split("/")[1]); ids.append(pid)
+        te=m.select_one(".tgme_widget_message_text"); text=te.get_text("\n") if te else ""
+        if not text.strip(): continue
+        photos=[]
         for w in m.select(".tgme_widget_message_photo_wrap"):
-            mm = re.search(r"background-image:url\('([^']+)'\)", w.get("style", ""))
-            if mm:
-                photos.append(mm.group(1))
-        t = m.select_one(".tgme_widget_message_date time")
-        date = t.get("datetime") if t and t.get("datetime") else ""
-        msgs.append(dict(pid=pid, post=post, text=text, photos=photos, date=date))
-    return msgs, (min(ids) if ids else None)
-
+            mm=re.search(r"background-image:url\('([^']+)'\)",w.get("style",""))
+            if mm: photos.append(mm.group(1))
+        t=m.select_one(".tgme_widget_message_date time"); date=t.get("datetime") if t and t.get("datetime") else ""
+        msgs.append(dict(pid=pid,post=post,text=text,photos=photos,date=date))
+    return msgs,(min(ids) if ids else None)
 def collect():
-    found = {}
-    url = f"https://t.me/s/{CHANNEL}"
+    found={}; url=f"https://t.me/s/{CHANNEL}"
     for _ in range(MAX_PAGES):
-        msgs, min_id = parse(fetch(url))
-        for it in msgs:
-            found.setdefault(it["pid"], it)
-        laptops = [i for i in found.values() if is_laptop(i["text"])]
-        if len(laptops) >= MAX_CARDS or not min_id:
-            break
-        url = f"https://t.me/s/{CHANNEL}?before={min_id}"
-    laptops = [i for i in found.values() if is_laptop(i["text"])]
-    laptops.sort(key=lambda x: -x["pid"])
+        msgs,min_id=parse(fetch(url))
+        for it in msgs: found.setdefault(it["pid"],it)
+        if len([i for i in found.values() if is_laptop(i["text"])])>=MAX_CARDS or not min_id: break
+        url=f"https://t.me/s/{CHANNEL}?before={min_id}"
+    laptops=[i for i in found.values() if is_laptop(i["text"])]; laptops.sort(key=lambda x:-x["pid"])
     return laptops[:MAX_CARDS]
 
+def download_photos(item):
+    """Завантажує фото поста в img/ і повертає локальні шляхи. Не зникають."""
+    os.makedirs(IMG_DIR,exist_ok=True); local=[]
+    for idx,u in enumerate(item["photos"][:MAX_PHOTOS_PER_CARD]):
+        fn=f"{IMG_DIR}/{item['pid']}_{idx}.jpg"
+        if not os.path.exists(fn) or os.path.getsize(fn)==0:
+            try:
+                r=requests.get(u,headers=UA,timeout=40)
+                if r.status_code==200 and len(r.content)>1000:
+                    open(fn,"wb").write(r.content)
+                else:
+                    continue
+            except Exception:
+                if os.path.exists(fn): local.append(fn)
+                continue
+        local.append(fn)
+    return local
+
 def fmt_date(dt):
-    m = re.match(r"(\d{4})-(\d{2})-(\d{2})", dt or "")
+    m=re.match(r"(\d{4})-(\d{2})-(\d{2})",dt or "")
     return f"{m.group(3)}.{m.group(2)}.{m.group(1)}" if m else ""
 
 def card(it):
-    text = it["text"]
-    title = field(text, LB_MODEL) or "Ноутбук"
-    rows = [
-        ("Екран", field(text, LB_SCREEN)),
-        ("Процесор", field(text, LB_CPU)),
-        ("ОЗП", field(text, LB_RAM)),
-        ("Накопичувач", field(text, LB_STORAGE)),
-        ("Відео", field(text, LB_GPU)),
-        ("Акумулятор", battery(text)),
-    ]
-    specs = "".join(
-        f'<li><span class="k">{esc(k)}</span><span class="v">{esc(v)}</span></li>'
-        for k, v in rows if v
-    )
-    imgs = "".join(
-        f'<img src="{html.escape(u)}" alt="{esc(title)}" loading="lazy">'
-        for u in (it["photos"] or [])
-    ) or '<img alt="Фото у Telegram">'
-    date = fmt_date(it["date"])
-    date_html = f'<div class="lap-date">Додано {date}</div>' if date else ""
-    post_url = f"https://t.me/{it['post']}"
+    text=it["text"]; title=field(text,LB_MODEL) or "Ноутбук"
+    rows=[("Екран",field(text,LB_SCREEN)),("Процесор",field(text,LB_CPU)),
+          ("ОЗП",field(text,LB_RAM)),("Накопичувач",field(text,LB_STORAGE)),
+          ("Відео",field(text,LB_GPU)),("Акумулятор",battery(text))]
+    specs="".join(f'<li><span class="k">{esc(k)}</span><span class="v">{esc(v)}</span></li>' for k,v in rows if v)
+    imgs="".join(f'<img src="{p}" alt="{esc(title)}" loading="lazy">' for p in it.get("local_photos",[])) or '<img alt="Фото у Telegram">'
+    date=fmt_date(it["date"]); date_html=f'<div class="lap-date">Додано {date}</div>' if date else ""
+    post_url=f"https://t.me/{it['post']}"
     return f'''      <article class="lap">
         <div class="lap-gallery">{imgs}</div>
         <div class="lap-body">
@@ -165,20 +130,28 @@ def card(it):
       </article>'''
 
 def main():
-    items = collect()
+    items=collect()
     if not items:
-        print("Не знайдено жодного ноутбука — index.html не змінюю.")
-        return
-    grid = '<div class="lap-grid">\n' + "\n".join(card(i) for i in items) + "\n      </div>"
-    src = open(INDEX, encoding="utf-8").read()
-    a, b = "<!--LAPTOPS:START-->", "<!--LAPTOPS:END-->"
-    i, j = src.index(a), src.index(b)
-    new = src[:i] + a + "\n      " + grid + "\n      " + src[j:]
-    if new != src:
-        open(INDEX, "w", encoding="utf-8").write(new)
-        print(f"Оновлено: {len(items)} ноутбуків.")
-    else:
-        print("Змін немає.")
+        print("Не знайдено ноутбуків — index.html не змінюю."); return
+    used=set()
+    for it in items:
+        it["local_photos"]=download_photos(it)
+        used.update(it["local_photos"])
+    # прибрати старі фото, яких уже нема серед актуальних
+    if os.path.isdir(IMG_DIR):
+        for f in os.listdir(IMG_DIR):
+            p=f"{IMG_DIR}/{f}"
+            if p not in used:
+                try: os.remove(p)
+                except OSError: pass
+    grid='<div class="lap-grid">\n'+"\n".join(card(i) for i in items)+"\n      </div>"
+    src=open(INDEX,encoding="utf-8").read()
+    a,b="<!--LAPTOPS:START-->","<!--LAPTOPS:END-->"
+    i,j=src.index(a),src.index(b)
+    new=src[:i]+a+"\n      "+grid+"\n      "+src[j:]
+    if new!=src:
+        open(INDEX,"w",encoding="utf-8").write(new)
+    print(f"Готово: {len(items)} ноутбуків, фото завантажено: {len(used)}.")
 
-if __name__ == "__main__":
+if __name__=="__main__":
     main()
