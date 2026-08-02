@@ -23,7 +23,7 @@ jobs:
           python-version: "3.11"
 
       - name: Встановити залежності
-        run: pip install requests beautifulsoup4
+        run: pip install requests beautifulsoup4 pillow
 
       - name: Зібрати ноутбуки
         run: python build_catalog.py
