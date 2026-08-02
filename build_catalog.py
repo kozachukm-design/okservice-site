@@ -1,28 +1,23 @@
 # -*- coding: utf-8 -*-
 """
 OK Service — авто-збирач ноутбуків із Telegram-каналу.
-Читає t.me/s/..., прибирає смайли, розбирає характеристики (знос -> стан),
-ЗАВАНТАЖУЄ фото в теку img/ (щоб вони не зникали), будує фірмові картки
-і вставляє їх у index.html між <!--LAPTOPS:START--> ... <!--LAPTOPS:END-->.
+Фото ВШИВАЮТЬСЯ прямо в index.html (base64) — жодних окремих тек,
+фото не зникають. Оновлює каталог між <!--LAPTOPS:START-->...<!--LAPTOPS:END-->.
 """
-import re, os, html, requests
+import re, io, html, base64, requests
 from bs4 import BeautifulSoup
+from PIL import Image
 
-CHANNEL   = "ok_0683627070"
-DM_LINK   = "https://t.me/+380683627070"
-INDEX     = "index.html"
-IMG_DIR   = "img"
-MAX_CARDS = 6
-MAX_PAGES = 3
-MAX_PHOTOS_PER_CARD = 6
-SKIP      = ["продано", "prodano", "резерв", "reserve"]
-UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36"}
+CHANNEL="ok_0683627070"; DM_LINK="https://t.me/+380683627070"; INDEX="index.html"
+MAX_CARDS=6; MAX_PAGES=3; MAX_PHOTOS_PER_CARD=3
+IMG_MAXSIDE=1000; IMG_QUALITY=74
+SKIP=["продано","prodano","резерв","reserve"]
+UA={"User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36",
+    "Referer":"https://t.me/"}
 
-EMOJI = re.compile(
-    "[\U0001F000-\U0001FAFF\U00002600-\U000027BF\U0001F1E6-\U0001F1FF"
-    "\U00002190-\U000021FF\U00002B00-\U00002BFF\U0000FE00-\U0000FE0F\U0000200D"
-    "\U000023E9-\U000023FA\U00002B50\U0000274C\U00002705\U0000203C\U00002049]+", flags=re.UNICODE)
-
+EMOJI=re.compile("[\U0001F000-\U0001FAFF\U00002600-\U000027BF\U0001F1E6-\U0001F1FF"
+ "\U00002190-\U000021FF\U00002B00-\U00002BFF\U0000FE00-\U0000FE0F\U0000200D"
+ "\U000023E9-\U000023FA\U00002B50\U0000274C\U00002705\U0000203C\U00002049]+",flags=re.UNICODE)
 LB_MODEL=("Виробник","Модель"); LB_SCREEN=("Екран","Дисплей","Матриця")
 LB_CPU=("Процесор","CPU"); LB_RAM=("Оперативна пам","ОЗП","RAM","Оперативка","Память","Пам'ять")
 LB_STORAGE=("Накопичувач","Диск","SSD","HDD","Накопич"); LB_GPU=("Відео","Відеокарта","Графіка","GPU")
@@ -32,7 +27,6 @@ def clean(t):
     t=EMOJI.sub("",t or ""); t=t.replace("\u2019","'").replace("`","'").replace("\u00b4","'")
     return re.sub(r"[ \t]{2,}"," ",t).strip(" \u00a0·-—:!")
 def esc(t): return html.escape(clean(t))
-
 def field(text,labels):
     for line in text.splitlines():
         lc=clean(line); low=lc.lower()
@@ -84,35 +78,28 @@ def collect():
     laptops=[i for i in found.values() if is_laptop(i["text"])]; laptops.sort(key=lambda x:-x["pid"])
     return laptops[:MAX_CARDS]
 
-def download_photos(item):
-    """Завантажує фото поста в img/ і повертає локальні шляхи. Не зникають."""
-    os.makedirs(IMG_DIR,exist_ok=True); local=[]
-    for idx,u in enumerate(item["photos"][:MAX_PHOTOS_PER_CARD]):
-        fn=f"{IMG_DIR}/{item['pid']}_{idx}.jpg"
-        if not os.path.exists(fn) or os.path.getsize(fn)==0:
-            try:
-                r=requests.get(u,headers=UA,timeout=40)
-                if r.status_code==200 and len(r.content)>1000:
-                    open(fn,"wb").write(r.content)
-                else:
-                    continue
-            except Exception:
-                if os.path.exists(fn): local.append(fn)
-                continue
-        local.append(fn)
-    return local
+def to_data_uri(url):
+    """Завантажує фото, стискає й повертає data:image/jpeg;base64 (вшивається в HTML)."""
+    try:
+        r=requests.get(url,headers=UA,timeout=40)
+        if r.status_code!=200 or len(r.content)<1000: return None
+        im=Image.open(io.BytesIO(r.content)).convert("RGB")
+        w,h=im.size; k=min(1.0, IMG_MAXSIDE/max(w,h))
+        if k<1.0: im=im.resize((int(w*k),int(h*k)), Image.LANCZOS)
+        buf=io.BytesIO(); im.save(buf,"JPEG",quality=IMG_QUALITY,optimize=True)
+        return "data:image/jpeg;base64,"+base64.b64encode(buf.getvalue()).decode()
+    except Exception:
+        return None
 
 def fmt_date(dt):
-    m=re.match(r"(\d{4})-(\d{2})-(\d{2})",dt or "")
-    return f"{m.group(3)}.{m.group(2)}.{m.group(1)}" if m else ""
+    m=re.match(r"(\d{4})-(\d{2})-(\d{2})",dt or ""); return f"{m.group(3)}.{m.group(2)}.{m.group(1)}" if m else ""
 
 def card(it):
     text=it["text"]; title=field(text,LB_MODEL) or "Ноутбук"
-    rows=[("Екран",field(text,LB_SCREEN)),("Процесор",field(text,LB_CPU)),
-          ("ОЗП",field(text,LB_RAM)),("Накопичувач",field(text,LB_STORAGE)),
-          ("Відео",field(text,LB_GPU)),("Акумулятор",battery(text))]
+    rows=[("Екран",field(text,LB_SCREEN)),("Процесор",field(text,LB_CPU)),("ОЗП",field(text,LB_RAM)),
+          ("Накопичувач",field(text,LB_STORAGE)),("Відео",field(text,LB_GPU)),("Акумулятор",battery(text))]
     specs="".join(f'<li><span class="k">{esc(k)}</span><span class="v">{esc(v)}</span></li>' for k,v in rows if v)
-    imgs="".join(f'<img src="{p}" alt="{esc(title)}" loading="lazy">' for p in it.get("local_photos",[])) or '<img alt="Фото у Telegram">'
+    imgs="".join(f'<img src="{u}" alt="{esc(title)}" loading="lazy">' for u in it.get("data_photos",[])) or '<img alt="Фото у Telegram">'
     date=fmt_date(it["date"]); date_html=f'<div class="lap-date">Додано {date}</div>' if date else ""
     post_url=f"https://t.me/{it['post']}"
     return f'''      <article class="lap">
@@ -133,25 +120,20 @@ def main():
     items=collect()
     if not items:
         print("Не знайдено ноутбуків — index.html не змінюю."); return
-    used=set()
+    total=0
     for it in items:
-        it["local_photos"]=download_photos(it)
-        used.update(it["local_photos"])
-    # прибрати старі фото, яких уже нема серед актуальних
-    if os.path.isdir(IMG_DIR):
-        for f in os.listdir(IMG_DIR):
-            p=f"{IMG_DIR}/{f}"
-            if p not in used:
-                try: os.remove(p)
-                except OSError: pass
+        uris=[]
+        for u in it["photos"][:MAX_PHOTOS_PER_CARD]:
+            d=to_data_uri(u)
+            if d: uris.append(d)
+        it["data_photos"]=uris; total+=len(uris)
     grid='<div class="lap-grid">\n'+"\n".join(card(i) for i in items)+"\n      </div>"
     src=open(INDEX,encoding="utf-8").read()
     a,b="<!--LAPTOPS:START-->","<!--LAPTOPS:END-->"
     i,j=src.index(a),src.index(b)
     new=src[:i]+a+"\n      "+grid+"\n      "+src[j:]
-    if new!=src:
-        open(INDEX,"w",encoding="utf-8").write(new)
-    print(f"Готово: {len(items)} ноутбуків, фото завантажено: {len(used)}.")
+    if new!=src: open(INDEX,"w",encoding="utf-8").write(new)
+    print(f"Готово: {len(items)} ноутбуків, фото вшито: {total}.")
 
 if __name__=="__main__":
     main()
