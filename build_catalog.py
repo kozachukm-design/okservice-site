@@ -9,7 +9,7 @@ from bs4 import BeautifulSoup
 from PIL import Image
 
 CHANNEL="ok_0683627070"; DM_LINK="https://t.me/+380683627070"; INDEX="index.html"
-MAX_CARDS=6; MAX_PAGES=3; MAX_PHOTOS_PER_CARD=3
+MAX_CARDS=6; MAX_PAGES=3; MAX_PHOTOS_PER_CARD=6
 IMG_MAXSIDE=1000; IMG_QUALITY=74
 SKIP=["продано","prodano","резерв","reserve"]
 UA={"User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36",
