@@ -1,15 +1,16 @@
 # -*- coding: utf-8 -*-
 """
 OK Service — авто-збирач ноутбуків із Telegram-каналу.
-Фото ВШИВАЮТЬСЯ прямо в index.html (base64) — жодних окремих тек,
-фото не зникають. Оновлює каталог між <!--LAPTOPS:START-->...<!--LAPTOPS:END-->.
+Фото зберігаються окремими файлами в теку img/ і підвантажуються ліниво
+(loading="lazy") — сторінка відкривається швидко навіть на мобільному.
+Оновлює каталог між <!--LAPTOPS:START-->...<!--LAPTOPS:END-->.
 """
-import re, io, html, base64, requests
+import re, io, os, html, requests
 from bs4 import BeautifulSoup
 from PIL import Image
 
 CHANNEL="ok_0683627070"; DM_LINK="https://t.me/+380683627070"; INDEX="index.html"
-MAX_CARDS=6; MAX_PAGES=3; MAX_PHOTOS_PER_CARD=6
+MAX_CARDS=6; MAX_PAGES=3; MAX_PHOTOS_PER_CARD=6; IMG_DIR="img"
 IMG_MAXSIDE=1000; IMG_QUALITY=74
 SKIP=["продано","prodano","резерв","reserve"]
 UA={"User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36",
@@ -78,16 +79,21 @@ def collect():
     laptops=[i for i in found.values() if is_laptop(i["text"])]; laptops.sort(key=lambda x:-x["pid"])
     return laptops[:MAX_CARDS]
 
-def to_data_uri(url):
-    """Завантажує фото, стискає й повертає data:image/jpeg;base64 (вшивається в HTML)."""
+def save_photo(url, pid, idx):
+    """Завантажує фото, стискає й зберігає у теку img/. Повертає шлях і розміри."""
+    fn = f"{IMG_DIR}/{pid}_{idx}.jpg"
     try:
-        r=requests.get(url,headers=UA,timeout=40)
-        if r.status_code!=200 or len(r.content)<1000: return None
-        im=Image.open(io.BytesIO(r.content)).convert("RGB")
-        w,h=im.size; k=min(1.0, IMG_MAXSIDE/max(w,h))
-        if k<1.0: im=im.resize((int(w*k),int(h*k)), Image.LANCZOS)
-        buf=io.BytesIO(); im.save(buf,"JPEG",quality=IMG_QUALITY,optimize=True)
-        return "data:image/jpeg;base64,"+base64.b64encode(buf.getvalue()).decode()
+        r = requests.get(url, headers=UA, timeout=40)
+        if r.status_code != 200 or len(r.content) < 1000:
+            return None
+        im = Image.open(io.BytesIO(r.content)).convert("RGB")
+        w, h = im.size
+        k = min(1.0, IMG_MAXSIDE / max(w, h))
+        if k < 1.0:
+            im = im.resize((int(w * k), int(h * k)), Image.LANCZOS)
+        os.makedirs(IMG_DIR, exist_ok=True)
+        im.save(fn, "JPEG", quality=IMG_QUALITY, optimize=True, progressive=True)
+        return {"src": fn, "w": im.size[0], "h": im.size[1]}
     except Exception:
         return None
 
@@ -99,7 +105,10 @@ def card(it):
     rows=[("Екран",field(text,LB_SCREEN)),("Процесор",field(text,LB_CPU)),("ОЗП",field(text,LB_RAM)),
           ("Накопичувач",field(text,LB_STORAGE)),("Відео",field(text,LB_GPU)),("Акумулятор",battery(text))]
     specs="".join(f'<li><span class="k">{esc(k)}</span><span class="v">{esc(v)}</span></li>' for k,v in rows if v)
-    imgs="".join(f'<img src="{u}" alt="{esc(title)}" loading="lazy">' for u in it.get("data_photos",[])) or '<img alt="Фото у Telegram">'
+    imgs="".join(
+        f'<img src="{p["src"]}" alt="{esc(title)}" width="{p["w"]}" height="{p["h"]}" loading="lazy" decoding="async">'
+        for p in it.get("photos_local", [])
+    ) or '<img alt="Фото у Telegram">'
     date=fmt_date(it["date"]); date_html=f'<div class="lap-date">Додано {date}</div>' if date else ""
     post_url=f"https://t.me/{it['post']}"
     return f'''      <article class="lap">
@@ -117,23 +126,37 @@ def card(it):
       </article>'''
 
 def main():
-    items=collect()
+    items = collect()
     if not items:
-        print("Не знайдено ноутбуків — index.html не змінюю."); return
-    total=0
+        print("Не знайдено ноутбуків — index.html не змінюю.")
+        return
+    used, total = set(), 0
     for it in items:
-        uris=[]
-        for u in it["photos"][:MAX_PHOTOS_PER_CARD]:
-            d=to_data_uri(u)
-            if d: uris.append(d)
-        it["data_photos"]=uris; total+=len(uris)
-    grid='<div class="lap-grid">\n'+"\n".join(card(i) for i in items)+"\n      </div>"
-    src=open(INDEX,encoding="utf-8").read()
-    a,b="<!--LAPTOPS:START-->","<!--LAPTOPS:END-->"
-    i,j=src.index(a),src.index(b)
-    new=src[:i]+a+"\n      "+grid+"\n      "+src[j:]
-    if new!=src: open(INDEX,"w",encoding="utf-8").write(new)
-    print(f"Готово: {len(items)} ноутбуків, фото вшито: {total}.")
+        local = []
+        for idx, u in enumerate(it["photos"][:MAX_PHOTOS_PER_CARD]):
+            p = save_photo(u, it["pid"], idx)
+            if p:
+                local.append(p)
+                used.add(p["src"])
+        it["photos_local"] = local
+        total += len(local)
+    # прибрати знімки, яких уже немає серед актуальних
+    if os.path.isdir(IMG_DIR):
+        for f in os.listdir(IMG_DIR):
+            p = f"{IMG_DIR}/{f}"
+            if p not in used:
+                try:
+                    os.remove(p)
+                except OSError:
+                    pass
+    grid = '<div class="lap-grid">\n' + "\n".join(card(i) for i in items) + "\n      </div>"
+    src = open(INDEX, encoding="utf-8").read()
+    a, b = "<!--LAPTOPS:START-->", "<!--LAPTOPS:END-->"
+    i, j = src.index(a), src.index(b)
+    new = src[:i] + a + "\n      " + grid + "\n      " + src[j:]
+    if new != src:
+        open(INDEX, "w", encoding="utf-8").write(new)
+    print(f"Готово: {len(items)} ноутбуків, фото збережено: {total}.")
 
 if __name__=="__main__":
     main()

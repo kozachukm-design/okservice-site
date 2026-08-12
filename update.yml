@@ -23,16 +23,16 @@ jobs:
           python-version: "3.11"
       - name: Встановити залежності
         run: pip install requests beautifulsoup4 pillow
-      - name: Зібрати ноутбуки (фото вшиваються в HTML)
+      - name: Зібрати ноутбуки (фото — окремими файлами)
         run: python build_catalog.py
       - name: Опублікувати зміни
         run: |
           git config user.name "okservice-bot"
           git config user.email "actions@users.noreply.github.com"
-          git add index.html
+          git add -A index.html img
           if git diff --cached --quiet; then
             echo "Змін немає."
           else
-            git commit -m "Авто-оновлення каталогу (фото вшито)"
+            git commit -m "Авто-оновлення каталогу (фото окремими файлами)"
             git push
           fi
