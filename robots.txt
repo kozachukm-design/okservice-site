@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://okservice.com.ua/sitemap.xml
