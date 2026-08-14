@@ -84,9 +84,9 @@ a{color:inherit;text-decoration:none}
 header{position:sticky;top:0;z-index:50;background:rgba(242,249,250,.88);
   backdrop-filter:saturate(140%) blur(10px);border-bottom:1px solid var(--line)}
 .nav{display:flex;align-items:center;justify-content:space-between;height:66px}
-.brand{display:flex;align-items:center;gap:.6em;font-weight:700;font-size:1.15rem;letter-spacing:-.01em}
+.brand{display:flex;align-items:center;gap:.6em;font-weight:700;font-size:1.15rem;letter-spacing:-.01em;white-space:nowrap;flex:0 0 auto}
 .brand img{width:40px;height:40px;border-radius:50%;display:block}
-.navlinks{display:flex;gap:1.6rem;align-items:center}
+.navlinks{display:flex;gap:1.6rem;align-items:center;flex-wrap:nowrap}
 .navlinks a{font-size:.93rem;color:var(--muted);font-weight:500}
 .navlinks a:hover{color:var(--ink)}
 .nav .btn{padding:.6em 1em}
@@ -313,7 +313,6 @@ footer{background:var(--ink);color:#c6d2dc;padding:40px 0 30px;font-size:.9rem}
       <a href="#catalog">Наявні</a>
       <a href="#prices">Ціни</a>
       <a href="#reviews">Відгуки</a>
-      <a href="/remont-noutbukiv/">Ремонт ноутбуків</a>
       <a href="#faq">Питання</a>
       <a href="#contacts">Контакти</a>
       <a class="btn btn-primary" href="tel:+380683627070">Подзвонити</a>
