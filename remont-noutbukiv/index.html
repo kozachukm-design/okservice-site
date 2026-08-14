@@ -84,7 +84,7 @@ a{color:inherit;text-decoration:none}
 header{position:sticky;top:0;z-index:50;background:rgba(242,249,250,.88);
   backdrop-filter:saturate(140%) blur(10px);border-bottom:1px solid var(--line)}
 .nav{display:flex;align-items:center;justify-content:space-between;height:66px}
-.brand{display:flex;align-items:center;gap:.6em;font-weight:700;font-size:1.15rem;letter-spacing:-.01em}
+.brand{display:flex;align-items:center;gap:.6em;font-weight:700;font-size:1.15rem;letter-spacing:-.01em;white-space:nowrap;flex:0 0 auto}
 .brand img{width:40px;height:40px;border-radius:50%;display:block}
 .navlinks{display:flex;gap:1.6rem;align-items:center}
 .navlinks a{font-size:.93rem;color:var(--muted);font-weight:500}
@@ -154,7 +154,7 @@ section{padding:74px 0}
 .card:hover{transform:translateY(-3px);box-shadow:var(--shadow);border-color:var(--lblue)}
 .card .ic{width:44px;height:44px;border-radius:11px;background:rgba(238,108,77,.10);color:#EE6C4D;display:grid;place-items:center;margin-bottom:14px}
 .card .ic svg{width:25px;height:25px;stroke-width:2}
-.card h3{font-size:1.12rem;margin-bottom:.5rem;letter-spacing:-.01em}
+.card h3{font-size:1.12rem;margin-bottom:.5rem;letter-spacing:-.01em;white-space:nowrap;flex:0 0 auto}
 .card ul{list-style:none;margin-top:.6rem;display:grid;gap:7px}
 .card li{font-size:.92rem;color:var(--muted);padding-left:1.1em;position:relative}
 .card li:before{content:"–";position:absolute;left:0;color:var(--coral);font-weight:700}
@@ -176,7 +176,7 @@ section{padding:74px 0}
 .tg-placeholder{background:var(--surface);border:1.5px dashed var(--lblue);border-radius:var(--radius);
   padding:46px 28px;text-align:center;max-width:720px;margin:0 auto}
 .tg-placeholder .tg-ic{font-size:2rem;margin-bottom:10px}
-.tg-placeholder h3{font-size:1.2rem;margin-bottom:8px;letter-spacing:-.01em}
+.tg-placeholder h3{font-size:1.2rem;margin-bottom:8px;letter-spacing:-.01em;white-space:nowrap;flex:0 0 auto}
 .tg-placeholder p{color:var(--muted);font-size:.98rem;max-width:48ch;margin:0 auto 20px}
 .tg-feed{max-width:1120px;margin:0 auto;width:100%}
 .tg-feed .sk-ww-telegram-channel{display:block;width:100%;min-height:120px;overflow:visible}
@@ -195,7 +195,7 @@ section{padding:74px 0}
 .lap-specs li:last-child{border-bottom:0}
 .lap-specs .k{color:var(--muted);flex:0 0 92px;font-family:"IBM Plex Mono",monospace;font-size:.74rem;text-transform:uppercase;letter-spacing:.02em;padding-top:3px}
 .lap-specs .v{color:var(--ink);font-weight:500}
-.lap-price{font-weight:800;font-size:1.35rem;color:var(--coral);letter-spacing:-.01em}
+.lap-price{font-weight:800;font-size:1.35rem;color:var(--coral);letter-spacing:-.01em;white-space:nowrap;flex:0 0 auto}
 .lap-cta{margin-top:auto;display:flex;align-items:center;gap:14px}
 .lap-more{color:var(--muted);font-size:.9rem;text-decoration:none;border-bottom:1px dashed var(--line)}
 .lap-more:hover{color:var(--ink)}
@@ -252,7 +252,7 @@ section{padding:74px 0}
 .rcard .who{margin-top:auto;font-family:"IBM Plex Mono",monospace;font-size:.78rem;letter-spacing:.04em;color:var(--ink);font-weight:600}
 .rcard .who span{display:block;color:var(--muted);font-weight:400;margin-top:3px;letter-spacing:.02em}
 .rcta{background:var(--ink);color:#fff;border-radius:var(--radius);padding:28px 24px;display:flex;flex-direction:column;justify-content:center;gap:12px}
-.rcta h3{font-size:1.18rem;letter-spacing:-.01em}
+.rcta h3{font-size:1.18rem;letter-spacing:-.01em;white-space:nowrap;flex:0 0 auto}
 .rcta p{color:#c6d2dc;font-size:.94rem}
 .rcta .btn{align-self:flex-start}
 .gicon{display:inline-grid;place-items:center;width:20px;height:20px;background:#fff;border-radius:50%;color:#4285F4;font-weight:700;font-family:"IBM Plex Mono",monospace;font-size:.78rem}
@@ -348,7 +348,7 @@ footer{background:var(--ink);color:#c6d2dc;padding:40px 0 30px;font-size:.9rem}
     <nav class="navlinks" id="navlinks">
       <a href="/#services">Послуги</a>
       <a href="/#laptops">Ноутбуки</a>
-      <a href="/#catalog">Наявні</a>
+      <a href="/remont-noutbukiv/">Ремонт ноутбуків</a><a href="/#catalog">Наявні</a>
       <a href="/#prices">Ціни</a>
       <a href="/#reviews">Відгуки</a>
       <a href="/#faq">Питання</a>
