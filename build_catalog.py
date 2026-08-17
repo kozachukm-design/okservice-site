@@ -190,7 +190,7 @@ def card(it, shop=False):
         raw = f"Добрий день! Цікавить {clean(title)} — {clean(pr)}"
         href = f"https://t.me/{DM_USER}?text={urllib.parse.quote(raw)}"
         cta = (f'<a class="btn btn-tg lap-order" href="{href}" target="_blank" rel="noopener" '
-               f'data-msg="{html.escape(raw, quote=True)}">Замовити</a>')
+               f'data-msg="{html.escape(raw, quote=True)}">Замовити</a>' f'<a class="btn btn-wa lap-order" href="https://wa.me/380683627070?text={urllib.parse.quote(raw)}" target="_blank" rel="noopener" data-msg="{html.escape(raw, quote=True)}">WhatsApp</a>')
     else:
         cta = f'<a class="btn btn-tg" href="{DM_LINK}" target="_blank" rel="noopener">Забронювати</a>'
 
