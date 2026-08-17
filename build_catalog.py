@@ -186,13 +186,13 @@ def card(it, shop=False):
     date_html = f'<div class="lap-date">Додано {date}</div>' if date else ""
     post_url = f"https://t.me/{it['post']}"
 
+    raw = f"Добрий день! Цікавить {clean(title)} — {clean(pr)}"
     if shop:
-        raw = f"Добрий день! Цікавить {clean(title)} — {clean(pr)}"
         href = f"https://t.me/{DM_USER}?text={urllib.parse.quote(raw)}"
         cta = (f'<a class="btn btn-tg lap-order" href="{href}" target="_blank" rel="noopener" '
                f'data-msg="{html.escape(raw, quote=True)}">Замовити</a>' f'<a class="btn btn-wa lap-order" href="https://wa.me/380683627070?text={urllib.parse.quote(raw)}" target="_blank" rel="noopener" data-msg="{html.escape(raw, quote=True)}">WhatsApp</a>')
     else:
-        cta = f'<a class="btn btn-tg" href="{DM_LINK}" target="_blank" rel="noopener">Забронювати</a>'
+        cta = f'<a class="btn btn-tg lap-order" href="https://t.me/{DM_USER}?text={urllib.parse.quote(raw)}" target="_blank" rel="noopener" data-msg="{html.escape(raw, quote=True)}">Забронювати</a>'
 
     return f'''      <article class="lap">
         <div class="lap-gallery">{imgs}</div>
