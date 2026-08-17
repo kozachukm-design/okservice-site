@@ -12,12 +12,13 @@ OK Service — авто-збирач ноутбуків із Telegram-канал
 ВАЖЛИВО: чистка теки img/ видаляє ЛИШЕ файли виду 1234_0.jpg (фото ноутбуків).
 Будь-які інші файли не чіпаються. Фото для сайту лежать окремо в теці foto/.
 """
-import re, io, os, html, requests
+import re, io, os, html, urllib.parse, requests
 from bs4 import BeautifulSoup
 from PIL import Image
 
 CHANNEL = "ok_0683627070"
-DM_LINK = "https://t.me/+380683627070"
+DM_LINK = "https://t.me/+380683627070"      # чат за номером — без передзаповнення
+DM_USER = "OkServiceKhm"                    # ім'я користувача — лише воно дозволяє ?text=
 INDEX = "index.html"
 SHOP = "noutbuky-bu/index.html"
 
@@ -186,10 +187,10 @@ def card(it, shop=False):
     post_url = f"https://t.me/{it['post']}"
 
     if shop:
-        msg = html.escape(f"Доброго дня! Цікавить {clean(title)} — {clean(pr)}", quote=True)
-        cta = (f'<a class="btn btn-tg lap-order" href="{DM_LINK}" target="_blank" rel="noopener" '
-               f'data-msg="{msg}">Замовити</a>')
-    else:
+        raw = f"Добрий день! Цікавить {clean(title)} — {clean(pr)}"
+        href = f"https://t.me/{DM_USER}?text={urllib.parse.quote(raw)}"
+        cta = (f'<a class="btn btn-tg lap-order" href="{href}" target="_blank" rel="noopener" '
+               f'data-msg="{html.escape(raw, quote=True)}">Замовити</a>')
         cta = f'<a class="btn btn-tg" href="{DM_LINK}" target="_blank" rel="noopener">Забронювати</a>'
 
     return f'''      <article class="lap">
