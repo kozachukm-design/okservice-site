@@ -141,7 +141,9 @@ section{padding:74px 0}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:24px;
   transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}
 .card:hover{transform:translateY(-3px);box-shadow:var(--shadow);border-color:var(--lblue)}
-.card .ic{width:44px;height:44px;border-radius:11px;background:rgba(238,108,77,.10);color:#EE6C4D;display:grid;place-items:center;margin-bottom:14px}
+.card .ic{width:54px;height:54px;border-radius:15px;background:var(--ink);color:#fff;display:grid;place-items:center;margin-bottom:16px;box-shadow:0 8px 18px rgba(41,50,65,.20);transition:background .25s ease,transform .25s ease}
+  .card .ic svg{width:27px;height:27px;stroke-width:1.85}
+  .card:hover .ic{background:var(--coral);transform:translateY(-3px) rotate(-3deg)}
 .card .ic svg{width:25px;height:25px;stroke-width:2}
 .card h3{font-size:1.12rem;margin-bottom:.5rem;letter-spacing:-.01em}
 .card ul{list-style:none;margin-top:.6rem;display:grid;gap:7px}
@@ -312,7 +314,10 @@ footer{background:var(--ink);color:#c6d2dc;padding:40px 0 30px;font-size:.9rem}
 }
 
 /* ===== БЛОК «У ЦИФРАХ» ===== */
-.stats{background:var(--ink);color:#fff;padding:46px 0;border-top:1px solid rgba(224,251,252,.10)}
+.stats{position:relative;overflow:hidden;background:var(--ink);color:#fff;padding:56px 0;border-top:1px solid rgba(224,251,252,.10)}
+  .stats::before{content:"";position:absolute;inset:0;pointer-events:none;background-image:repeating-linear-gradient(90deg,rgba(152,193,217,.16) 0 1px,transparent 1px 56px),repeating-linear-gradient(0deg,rgba(152,193,217,.16) 0 1px,transparent 1px 56px)}
+  .stats::after{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(120% 90% at 50% 0%,rgba(61,90,128,.55) 0%,rgba(41,50,65,0) 65%)}
+  .stats .wrap{position:relative;z-index:2}
 .stats-grid{display:grid;grid-template-columns:repeat(3,1fr)}
 .stat{text-align:center;padding:6px 18px}
 .stat + .stat{border-left:1px solid rgba(224,251,252,.18)}
