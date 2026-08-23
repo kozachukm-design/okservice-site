@@ -166,7 +166,7 @@ def fmt_date(dt):
 def card(it, shop=False):
     """shop=True — картка для сторінки /noutbuky-bu/ (кнопка «Замовити» з копіюванням тексту)."""
     text = it["text"]
-    title = field(text, LB_MODEL) or "Ноутбук"
+    title = field(text, LB_MODEL) or next((clean(l)[:70] for l in text.splitlines() if clean(l) and ":" not in clean(l)[:24] and not clean(l).lower().startswith(("ціна", "вартість", "стан", "гарантія"))), "Товар")
     pr = price(text)
     rows = [("Екран", field(text, LB_SCREEN)),
             ("Процесор", field(text, LB_CPU)),
