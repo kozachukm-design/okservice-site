@@ -732,7 +732,7 @@ footer{background:var(--ink);color:#c6d2dc;padding:40px 0 30px;font-size:.9rem}
     </div>
     <div class="price-wrap reveal">
       <div class="price-grid">
-        <div class="price-row"><span class="pn">Чистка охолодження + термопаста <small>рідкий метал — від 1500 грн</small></span><span class="pp">від 800 грн</span></div>
+        <div class="price-row"><span class="pn">Чистка охолодження і заміна термопасти</span><span class="pp">від 800 грн</span></div><div class="price-row"><span class="pn">Чистка охолодження і рідкий метал</span><span class="pp">від 1500 грн</span></div>
         <div class="price-row"><span class="pn">Встановлення Windows, налаштування</span><span class="pp">від 800 грн</span></div>
         <div class="price-row"><span class="pn">Ремонт після залиття, падіння, замикання</span><span class="pp">від 1200 грн</span></div>
         <div class="price-row"><span class="pn">Прошивка BIOS та мультиконтролера</span><span class="pp">від 1000 грн</span></div>
@@ -979,7 +979,7 @@ footer{background:var(--ink);color:#c6d2dc;padding:40px 0 30px;font-size:.9rem}
   document.addEventListener('keydown',function(e){ if(e.key==='Escape') close(); });
   window.addEventListener('resize',function(){ if(window.innerWidth>820) close(); });
 })();
-  (function(){ var els=document.querySelectorAll('.stats .num[data-count]'); if(!els.length) return; if(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return; function fmt(n){ return String(n).replace(/\B(?=(\d{3})+(?!\d))/g,' '); } function paint(el,v){ el.textContent=fmt(v)+(el.getAttribute('data-suffix')||''); } els.forEach(function(el){ paint(el,0); }); function run(el){ var target=parseInt(el.getAttribute('data-count'),10); var dur=1400, t0=null; function step(ts){ if(t0===null) t0=ts; var p=Math.min((ts-t0)/dur,1); var e=1-Math.pow(1-p,3); paint(el,Math.round(target*e)); if(p!==1) requestAnimationFrame(step); } requestAnimationFrame(step); } if(!('IntersectionObserver' in window)){ els.forEach(run); return; } var io=new IntersectionObserver(function(entries){ entries.forEach(function(en){ if(en.isIntersecting){ run(en.target); io.unobserve(en.target); } }); },{threshold:0.35}); els.forEach(function(el){ io.observe(el); }); })();
+  (function(){ var els=document.querySelectorAll('.stats .num[data-count]'); if(!els.length) return; if(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return; function fmt(n){ return String(n).replace(/\B(?=(\d{3})+(?!\d))/g,' '); } function paint(el,v){ el.textContent=fmt(v)+(el.getAttribute('data-suffix')||''); } function run(el){ var target=parseInt(el.getAttribute('data-count'),10); var dur=1400, t0=null; function step(ts){ if(t0===null) t0=ts; var p=Math.min((ts-t0)/dur,1); var e=1-Math.pow(1-p,3); paint(el,Math.round(target*e)); if(p!==1) requestAnimationFrame(step); } requestAnimationFrame(step); } if(!('IntersectionObserver' in window)){ els.forEach(run); return; } var io=new IntersectionObserver(function(entries){ entries.forEach(function(en){ if(en.isIntersecting){ run(en.target); io.unobserve(en.target); } }); },{threshold:0.35}); els.forEach(function(el){ io.observe(el); }); })();
 </script>
 </body>
 </html>
