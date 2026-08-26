@@ -100,7 +100,7 @@ function mark(){
 }
 if(order.length>=2){
   box.appendChild(chip('','Усі',cards.length));
-  order.forEach(function(k){ box.appendChild(chip(k,labels[k],counts[k])); });
+  order.sort(function(a,b){ return (counts[b]-counts[a]) || (labels[a]<labels[b]?-1:1); }); order.forEach(function(k){ box.appendChild(chip(k,labels[k],counts[k])); });
   mark();
 } else { box.style.display='none'; }
 
