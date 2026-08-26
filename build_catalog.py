@@ -4,7 +4,7 @@ OK Service — авто-збирач ноутбуків із Telegram-канал
 
 Пише у ДВА файли:
   index.html             — перші INDEX_CARDS (найновіші), між <!--LAPTOPS:START-->…<!--LAPTOPS:END-->
-  noutbuky-bu/index.html — усі до MAX_CARDS, між <!--LAPTOPS40:START-->…<!--LAPTOPS40:END-->
+  noutbuky-bu/index.html — усі знайдені (стеля MAX_CARDS), між <!--LAPTOPS40:START-->…<!--LAPTOPS40:END-->
 
 Фото зберігаються окремими файлами в теку img/ і підвантажуються ліниво
 (loading="lazy") — сторінка відкривається швидко навіть на мобільному.
@@ -22,14 +22,21 @@ DM_USER = "OkServiceKhm"                    # ім'я користувача —
 INDEX = "index.html"
 SHOP = "noutbuky-bu/index.html"
 
-MAX_CARDS = 40          # скільки ноутбуків на сторінці /noutbuky-bu/
+MAX_CARDS = 200         # стеля на сторінці /noutbuky-bu/ (беремо все, що є в каналі)
 INDEX_CARDS = 8         # скільки найновіших показувати на головній
-MAX_PAGES = 10          # скільки сторінок каналу гортати, щоб набрати MAX_CARDS
+MAX_PAGES = 40          # скільки сторінок каналу гортати; вистачає до найпершого поста
 MAX_PHOTOS_PER_CARD = 6
 IMG_DIR = "img"
 IMG_MAXSIDE = 1000
 IMG_QUALITY = 74
 SKIP = ["продано", "prodano", "резерв", "reserve"]
+
+# У каналі трапляються не лише ноутбуки: МФУ, монітор, зарядна станція, ПК.
+# Сторінка називається «Ноутбуки б/в», тому за замовчуванням вони не потрапляють
+# у каталог. Щоб показувати геть усе, постав ONLY_LAPTOPS = False.
+ONLY_LAPTOPS = True
+NOT_LAPTOP = ("мфу", "принтер", "монітор", "зарядна станція", "powerbank",
+              "power bank", "павербанк", "системний блок", "персональний комп")
 
 # фото ноутбуків мають вигляд 5688_0.jpg — лише такі файли можна прибирати
 PHOTO_NAME = re.compile(r"^\d+_\d+\.jpg$")
@@ -94,7 +101,16 @@ def price(text):
 
 def is_laptop(text):
     low = text.lower()
-    return any(w in low for w in ("ціна", "вартість")) and not any(w in low for w in SKIP)
+    if not any(w in low for w in ("ціна", "вартість")):
+        return False
+    if any(w in low for w in SKIP):
+        return False
+    if ONLY_LAPTOPS:
+        # дивимось лише перші рядки — там назва товару, а не опис
+        head = "\n".join(low.splitlines()[:3])
+        if any(w in head for w in NOT_LAPTOP):
+            return False
+    return True
 
 
 def fetch(url):
