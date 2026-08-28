@@ -102,7 +102,7 @@ header{position:sticky;top:0;z-index:50;background:rgba(242,249,250,.88);
 .hero h1 .hl{color:var(--steel)}
 .hero p.lead{font-size:1.12rem;color:var(--muted);max-width:36ch;margin-bottom:1.6rem}
 .hero-cta{display:flex;flex-wrap:wrap;gap:.7rem}
-.hero-sublinks{display:flex;gap:22px;margin-top:16px;flex-wrap:wrap}
+.hero-sublinks{display:flex;gap:22px;margin-top:16px;flex-wrap:wrap}@keyframes heroFade{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}.hero p.lead{animation:heroFade .55s ease-out .15s both}.hero-cta{animation:heroFade .55s ease-out .3s both}.hero-sublinks{animation:heroFade .55s ease-out .45s both}@media(prefers-reduced-motion:reduce){.hero p.lead,.hero-cta,.hero-sublinks{animation:none}}
 .hero-sublinks a{color:var(--muted);text-decoration:none;font-weight:500;font-size:.95rem;border-bottom:1px solid transparent;transition:.2s}
 .hero-sublinks a:hover{color:var(--steel);border-bottom-color:var(--steel)}
 .hero-deco{position:absolute;right:-140px;top:-120px;width:480px;height:480px;border-radius:50%;
