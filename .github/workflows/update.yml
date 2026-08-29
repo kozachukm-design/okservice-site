@@ -6,8 +6,9 @@ on:
       - build_catalog.py
       - .github/workflows/update.yml
   schedule:
-    - cron: "0 6 * * *"
-    - cron: "0 15 * * *"
+    - cron: "23 7 * * *"
+    - cron: "23 12 * * *"
+    - cron: "23 17 * * *"
   workflow_dispatch: {}       # кнопка «Run workflow» для ручного запуску
 
 permissions:
