@@ -23,7 +23,7 @@ INDEX = "index.html"
 SHOP = "noutbuky-bu/index.html"
 
 MAX_CARDS = 200         # стеля на сторінці /noutbuky-bu/ (беремо все, що є в каналі)
-INDEX_CARDS = 8         # скільки найновіших показувати на головній
+INDEX_CARDS = 3         # скільки найновіших показувати на головній
 MAX_PAGES = 40          # скільки сторінок каналу гортати; вистачає до найпершого поста
 MAX_PHOTOS_PER_CARD = 6
 IMG_DIR = "img"
