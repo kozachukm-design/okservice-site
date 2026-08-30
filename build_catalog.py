@@ -26,6 +26,7 @@ MAX_CARDS = 200         # стеля на сторінці /noutbuky-bu/ (бер
 INDEX_CARDS = 3         # скільки найновіших показувати на головній
 MAX_PAGES = 40          # скільки сторінок каналу гортати; вистачає до найпершого поста
 MAX_PHOTOS_PER_CARD = 6
+INDEX_PHOTOS_PER_CARD = 1   # на головній — по одному фото на картку
 IMG_DIR = "img"
 IMG_MAXSIDE = 1000
 IMG_QUALITY = 74
@@ -196,7 +197,7 @@ def card(it, shop=False):
     imgs = "".join(
         f'<img src="/{p["src"]}" alt="{esc(title)}" width="{p["w"]}" height="{p["h"]}" '
         f'loading="lazy" decoding="async">'
-        for p in it.get("photos_local", [])
+        for p in (it.get("photos_local", []) if shop else it.get("photos_local", [])[:INDEX_PHOTOS_PER_CARD])
     ) or '<img alt="Фото у Telegram">'
     date = fmt_date(it["date"])
     date_html = f'<div class="lap-date">Додано {date}</div>' if date else ""
