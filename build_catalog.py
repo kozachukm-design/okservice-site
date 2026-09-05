@@ -203,11 +203,11 @@ def card(it, shop=False):
     resv = any(w in it["text"].lower()[:60] for w in RESERVED); date_html = ('<div class="lap-date" style="color:#C0392B;font-weight:700">● В резерві</div>' if resv else (f'<div class="lap-date">Додано {date}</div>' if date else ""))
     post_url = f"https://t.me/{it['post']}"
 
-    raw = f"Добрий день! Цікавить {clean(title)} — {clean(pr)}"
+    raw = (f"Добрий день! Цікавить {clean(title)} — {clean(pr)}. Бачу, що він у резерві — напишіть, будь ласка, якщо звільниться." if resv else f"Добрий день! Цікавить {clean(title)} — {clean(pr)}")
     if shop:
         href = f"https://t.me/{DM_USER}?text={urllib.parse.quote(raw)}"
         cta = (f'<a class="btn btn-tg lap-order" href="{href}" target="_blank" rel="noopener" '
-               f'data-msg="{html.escape(raw, quote=True)}">Замовити</a>' f'<a class="btn btn-wa lap-order" href="https://wa.me/380683627070?text={urllib.parse.quote(raw)}" target="_blank" rel="noopener" data-msg="{html.escape(raw, quote=True)}">WhatsApp</a>')
+               f'data-msg="{html.escape(raw, quote=True)}">{"Написати, якщо звільниться" if resv else "Замовити"}</a>' f'<a class="btn btn-wa lap-order" href="https://wa.me/380683627070?text={urllib.parse.quote(raw)}" target="_blank" rel="noopener" data-msg="{html.escape(raw, quote=True)}">WhatsApp</a>')
     else:
         cta = f'<a class="btn btn-tg lap-order" href="https://t.me/{DM_USER}?text={urllib.parse.quote(raw)}" target="_blank" rel="noopener" data-msg="{html.escape(raw, quote=True)}">Забронювати</a>'
 
