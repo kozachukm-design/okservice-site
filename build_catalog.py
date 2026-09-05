@@ -30,7 +30,7 @@ INDEX_PHOTOS_PER_CARD = 1   # на головній — по одному фот
 IMG_DIR = "img"
 IMG_MAXSIDE = 1000
 IMG_QUALITY = 74
-SKIP = ["продано", "prodano", "резерв", "reserve"]
+SKIP = ["продано", "prodano"]; RESERVED = ["резерв", "reserve"]
 
 # У каналі трапляються не лише ноутбуки: МФУ, монітор, зарядна станція, ПК.
 # Сторінка називається «Ноутбуки б/в», тому за замовчуванням вони не потрапляють
@@ -200,7 +200,7 @@ def card(it, shop=False):
         for p in (it.get("photos_local", []) if shop else it.get("photos_local", [])[:INDEX_PHOTOS_PER_CARD])
     ) or '<img alt="Фото у Telegram">'
     date = fmt_date(it["date"])
-    date_html = f'<div class="lap-date">Додано {date}</div>' if date else ""
+    resv = any(w in it["text"].lower()[:60] for w in RESERVED); date_html = ('<div class="lap-date" style="color:#C0392B;font-weight:700">● В резерві</div>' if resv else (f'<div class="lap-date">Додано {date}</div>' if date else ""))
     post_url = f"https://t.me/{it['post']}"
 
     raw = f"Добрий день! Цікавить {clean(title)} — {clean(pr)}"
