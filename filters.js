@@ -35,7 +35,7 @@
     if (cards.length < 6) { return; }
 
     var css = '.okf{display:flex;flex-wrap:wrap;gap:7px;margin:0 0 12px;align-items:center}'
-      + '.okf-t{font-family:"IBM Plex Mono",monospace;font-size:.7rem;letter-spacing:.09em;color:var(--muted);text-transform:uppercase;min-width:96px}'
+      + '.okf-t{font-family:"IBM Plex Mono",monospace;font-size:.7rem;letter-spacing:.09em;color:var(--muted);text-transform:uppercase;flex:0 0 116px;max-width:116px;line-height:1.3}'
       + '.okf button{padding:6px 13px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--muted);font:inherit;font-size:.87rem;font-weight:600;cursor:pointer}'
       + '.okf button:hover{border-color:var(--steel);color:var(--ink)}'
       + '.okf button.on{background:var(--ink);border-color:var(--ink);color:#fff}'
